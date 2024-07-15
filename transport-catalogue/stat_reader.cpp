@@ -5,10 +5,10 @@ using namespace std;
 
 namespace outputspace{
 
-void PrintBus(const catalogue::TransportCatalogue& catalogue, 
+void PrintBus(catalogue::TransportCatalogue& catalogue, 
                                  string_view request, ostream& out){
     string_view bus = request.substr(4);
-    optional<vector<string_view>> stops = catalogue.GetBus(bus);  
+    const vector<string_view>* stops = catalogue.GetBusStops(bus);  
     if (!stops){
         out << request << ": not found"sv << endl;
         return;
@@ -19,10 +19,10 @@ void PrintBus(const catalogue::TransportCatalogue& catalogue,
         << " route length"sv << endl;                                     
 }
     
-void PrintStop(const catalogue::TransportCatalogue& catalogue, 
+void PrintStop(catalogue::TransportCatalogue& catalogue, 
                                  string_view request, ostream& out){
     string_view stop = request.substr(5);
-    optional<set<string_view>> stop_buses = catalogue.GetStopBuses(stop);
+    const set<string_view>* stop_buses = catalogue.GetStopBuses(stop);
     if(!stop_buses){
         out << request << ": not found"sv << endl;
         return;
@@ -32,13 +32,13 @@ void PrintStop(const catalogue::TransportCatalogue& catalogue,
         return;
     }
     out << request << ": "sv << "buses"sv;
-    for(auto i : *stop_buses){
-        out << ' ' << i;
+    for(auto stop_bus : *stop_buses){
+        out << ' ' << stop_bus;
     }
     out << endl;                                     
 }
 
-void ParseAndPrintStat(const catalogue::TransportCatalogue& catalogue, 
+void ParseAndPrintStat(catalogue::TransportCatalogue& catalogue, 
                                  string_view request, ostream& out) {
     if(request.find("Bus"sv) == 0){
         PrintBus(catalogue, request, out);
@@ -48,6 +48,16 @@ void ParseAndPrintStat(const catalogue::TransportCatalogue& catalogue,
     } 
     else 
         out << "Wrong request"sv << endl;
+}
+
+void GetFromCatalogue(std::istream& in, catalogue::TransportCatalogue& catalogue){
+    int stat_request_count;
+    in >> stat_request_count >> ws;
+    for (int i = 0; i < stat_request_count; ++i) {
+        string line;
+        getline(in, line);
+        ParseAndPrintStat(catalogue, line, cout);
+    }    
 }
 
 }

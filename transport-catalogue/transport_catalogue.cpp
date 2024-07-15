@@ -1,49 +1,49 @@
 
 #include "transport_catalogue.h"
 
+using namespace  std;
+
 namespace catalogue{
 
-void TransportCatalogue::AddStop(std::string_view&& stop, geo::Coordinates&& point){
-    if(stops_.count(stop)){
+void TransportCatalogue::AddStop(const std::string_view& stop, const geo::Coordinates& location){
+    if(nstops_.find(stop) != nstops_.end()){
         return;
     }
-    stops_[std::move(stop)] = std::move(point);
+    nstops_[Stop(stop, location)] = {};
 }
 
-void TransportCatalogue::AddBus(std::string_view&& bus, std::vector<std::string_view>&& bus_stops){
-    if(buses_.count(bus)){
+void TransportCatalogue::AddBus(const std::string_view& bus, const std::vector<std::string_view>& bus_stops){
+    if(nbuses_.find(bus) != nbuses_.end()){
         return;
     }    
-    for(auto i : bus_stops) 
-        stop_buses_[i].insert(bus);
-    buses_[std::move(bus)] = std::move(bus_stops);
+    for(auto iter = bus_stops.begin(); iter != bus_stops.end(); iter = next(iter)){ 
+        nstops_.at(*iter).insert(bus);
+    }
+    nbuses_[bus] = bus_stops;
 }
 
 double TransportCatalogue::GetLength(const std::string_view& bus) const{
     double length = 0.;
-    if(buses_.count(bus)){
-        for(auto it = buses_.at(bus).begin(); it != prev(buses_.at(bus).end()); it = next(it)){
-            length += geo::ComputeDistance(stops_.at(*it), stops_.at(*next(it)));
+    if(auto iter = nbuses_.find(bus); iter != nbuses_.end()){
+        for(auto it = (*iter).second.begin(); it != prev((*iter).second.end()); it = next(it)){
+            length += geo::ComputeDistance( (*(nstops_.find(*it))).first.location_ ,  (*(nstops_.find(*next(it)))).first.location_ );
         } 
     }
     return length;
 }
 
-std::optional<std::vector<std::string_view>> TransportCatalogue::GetBus(const std::string_view& bus) const{
-    if(!buses_.count(bus)){
-        return std::nullopt;
+const std::vector<std::string_view>* TransportCatalogue::GetBusStops(const std::string_view& bus){
+    if(auto iter = nbuses_.find(bus); iter != nbuses_.end()){
+        return &(*iter).second;
     }
-    return buses_.at(bus);    
+    return nullptr;    
 }
 
-std::optional<std::set<std::string_view>> TransportCatalogue::GetStopBuses(const std::string_view& stop) const{
-    if(!stop_buses_.count(stop)){
-        if(!stops_.count(stop)){
-            return std::nullopt;
-        }
-        return std::set<std::string_view>{};
+const std::set<std::string_view>* TransportCatalogue::GetStopBuses(const std::string_view& stop){
+    if(auto iter = nstops_.find(stop); iter != nstops_.end()){
+            return &iter->second;
     }
-    return stop_buses_.at(stop);
+    return nullptr;
 }
 
 }

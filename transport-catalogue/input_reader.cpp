@@ -107,16 +107,27 @@ void InputReader::ParseLine(std::string_view line) {
 }
 
 void InputReader::ApplyCommands([[maybe_unused]] catalogue::TransportCatalogue& catalogue) const {
-    for(auto& i : commands_){
-        if(i.command == "Stop"sv){
-            catalogue.AddStop(move(i.id), move(ParseCoordinates(i.description)));
+    for(auto& command : commands_){
+        if(command.command == "Stop"sv){
+            catalogue.AddStop(command.id, ParseCoordinates(command.description));
         }
     }
-    for(auto& i : commands_){
-        if(i.command == "Bus"sv){
-            catalogue.AddBus(move(i.id), move(ParseRoute(i.description)));
+    for(auto& command : commands_){
+        if(command.command == "Bus"sv){
+            catalogue.AddBus(command.id, ParseRoute(command.description));
         }        
     }
+}
+
+void InputReader::AddToCatalogue(std::istream& in, catalogue::TransportCatalogue& catalogue){
+    int base_request_count;
+    in >> base_request_count >> ws;
+    for (int i = 0; i < base_request_count; ++i) {
+        string line;
+        getline(in, line);
+        ParseLine(line);
+    }
+    ApplyCommands(catalogue);    
 }
 
 }

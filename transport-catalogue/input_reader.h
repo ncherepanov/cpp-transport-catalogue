@@ -1,10 +1,8 @@
-
 #pragma once
-
 #include <iostream>
-#include <set>
 #include <string>
 #include <string_view>
+#include <set>
 #include <vector>
 
 #include "geo.h"
@@ -34,7 +32,7 @@ public:
      */
     void ParseLine(std::string_view line);
     
-    std::vector<CommandDescription> GetCom(){
+    const std::vector<CommandDescription>& GetCommands() {
         return commands_;
     }
 
@@ -42,6 +40,8 @@ public:
      * Наполняет данными транспортный справочник, используя команды из commands_
      */
     void ApplyCommands(catalogue::TransportCatalogue& catalogue) const;
+    
+    void AddToCatalogue(std::istream& in, catalogue::TransportCatalogue& catalogue);
 
 private:
     std::vector<CommandDescription> commands_;
