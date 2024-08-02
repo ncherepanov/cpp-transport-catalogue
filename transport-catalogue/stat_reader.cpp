@@ -15,8 +15,9 @@ void PrintBus(catalogue::TransportCatalogue& catalogue,
     }
     set<string_view> set_stops((*stops).begin(), (*stops).end());
     out << request << ": "sv << (*stops).size() << " stops on route, "sv 
-        << set_stops.size() << " unique stops, "sv << catalogue.GetLength(bus) 
-        << " route length"sv << endl;                                     
+        << set_stops.size() << " unique stops, "sv << *catalogue.GetBusDist(bus)
+        << " route length, "sv << *catalogue.GetBusDist(bus)/(*catalogue.GetBusLen(bus)) << 
+        " curvature"sv << endl;                                     
 }
     
 void PrintStop(catalogue::TransportCatalogue& catalogue, 

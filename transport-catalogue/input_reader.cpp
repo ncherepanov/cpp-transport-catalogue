@@ -1,9 +1,10 @@
-#include "input_reader.h"
 
 #include <algorithm>
-
 #include <cassert>
+#include <iostream>
 #include <iterator>
+
+#include "input_reader.h"
 
 using namespace std;
 
@@ -14,7 +15,7 @@ namespace inputspace{
  */
 geo::Coordinates ParseCoordinates(std::string_view str) {
     static const double nan = std::nan("");
-
+    
     auto not_space = str.find_first_not_of(' ');
     auto comma = str.find(',');
 
@@ -23,10 +24,12 @@ geo::Coordinates ParseCoordinates(std::string_view str) {
     }
 
     auto not_space2 = str.find_first_not_of(' ', comma + 1);
+    auto comma2 = str.find_first_of(',', not_space2 + 1);
 
     double lat = std::stod(std::string(str.substr(not_space, comma - not_space)));
-    double lng = std::stod(std::string(str.substr(not_space2)));
-
+    double lng = comma == str.npos ? 
+                 std::stod(std::string(str.substr(not_space2))) :
+                 std::stod(std::string(str.substr(not_space2, comma2 - not_space2)));
     return {lat, lng};
 }
 
@@ -58,6 +61,23 @@ std::vector<std::string_view> Split(std::string_view string, char delim) {
         pos = delim_pos + 1;
     }
 
+    return result;
+}
+
+/**
+ * Разбивает строку string на две строки, с помощью указанного символа-разделителя delim
+ * Если string = "5600m to Rossoshanskaya ulitsa" и delim = "to" получим вектор "5600m", "Rossoshanskaya ulitsa"
+ */
+std::vector<std::string_view> Split(std::string_view string, std::string_view delim) { 
+    std::vector<std::string_view> result;
+    auto delim_pos = string.find(delim, 0);
+    assert(delim_pos != string.npos);
+    auto substr = Trim(string.substr(0, delim_pos)); 
+    assert(!substr.empty()); 
+    result.push_back(substr);
+    substr = Trim(string.substr(delim_pos + delim.size(), string.size()));
+    assert(!substr.empty());
+    result.push_back(substr);
     return result;
 }
 
@@ -106,14 +126,35 @@ void InputReader::ParseLine(std::string_view line) {
     }
 }
 
+std::unordered_map<string_view, uint32_t> ParseDistances(std::string_view str) {
+    
+    std::vector<std::string_view> temp_dist =  Split(str, ',');
+    if (temp_dist.size() < 3){
+        return {};
+    }
+    std::unordered_map<string_view, uint32_t> result;
+    
+    for (uint8_t i = 2; i < temp_dist.size(); ++i) {
+        std::vector<std::string_view> temp = Split(temp_dist[i], " to "sv);       
+        result[temp[1]] = std::stoi(std::string(temp[0].substr(0, temp[0].size() - 1)));
+    }
+    return result;
+}
+
+
 void InputReader::ApplyCommands([[maybe_unused]] catalogue::TransportCatalogue& catalogue) const {
     for(auto& command : commands_){
-        if(command.command == "Stop"sv){
+        if (command.command == "Stop"sv){
             catalogue.AddStop(command.id, ParseCoordinates(command.description));
         }
     }
     for(auto& command : commands_){
-        if(command.command == "Bus"sv){
+        if (command.command == "Stop"sv){
+            catalogue.AddDistances(command.id, ParseDistances(command.description));
+        }
+    }    
+    for(auto& command : commands_){
+        if (command.command == "Bus"sv){
             catalogue.AddBus(command.id, ParseRoute(command.description));
         }        
     }

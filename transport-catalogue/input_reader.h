@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
+#include <set>
 #include <string>
 #include <string_view>
-#include <set>
 #include <vector>
 
 #include "geo.h"

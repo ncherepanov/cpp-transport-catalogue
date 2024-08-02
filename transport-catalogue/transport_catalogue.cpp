@@ -5,45 +5,83 @@ using namespace  std;
 
 namespace catalogue{
 
-void TransportCatalogue::AddStop(const std::string_view& stop, const geo::Coordinates& location){
-    if(nstops_.find(stop) != nstops_.end()){
+void TransportCatalogue::AddStop(std::string_view stop, const geo::Coordinates& location){
+    if (stops_.find(stop) != stops_.end()){
         return;
     }
-    nstops_[Stop(stop, location)] = {};
+    auto temp_stop = stops_str_.emplace(stop).first;
+    stops_buses_[*temp_stop] = {};
+    stops_.emplace(Stop(*temp_stop, location, {})); 
 }
 
-void TransportCatalogue::AddBus(const std::string_view& bus, const std::vector<std::string_view>& bus_stops){
-    if(nbuses_.find(bus) != nbuses_.end()){
+void TransportCatalogue::AddDistances(std::string_view stop, std::unordered_map<std::string_view, uint32_t> distances){
+    auto it_stop = stops_.find(stop);
+    if (it_stop == stops_.end()){
         return;
-    }    
-    for(auto iter = bus_stops.begin(); iter != bus_stops.end(); iter = next(iter)){ 
-        nstops_.at(*iter).insert(bus);
     }
-    nbuses_[bus] = bus_stops;
+    std::unordered_map<std::string_view, uint32_t> temp_dist;
+    for (auto [st, dist]: distances) {
+        auto it = stops_str_.find(string(st));
+        temp_dist[*it] = dist;
+    }
+    Stop temp_stop(*it_stop);
+    stops_.erase(it_stop);
+    temp_stop.distances_ = temp_dist; 
+    stops_.emplace(temp_stop); 
 }
 
-double TransportCatalogue::GetLength(const std::string_view& bus) const{
-    double length = 0.;
-    if(auto iter = nbuses_.find(bus); iter != nbuses_.end()){
-        for(auto it = (*iter).second.begin(); it != prev((*iter).second.end()); it = next(it)){
-            length += geo::ComputeDistance( (*(nstops_.find(*it))).first.location_ ,  (*(nstops_.find(*next(it)))).first.location_ );
-        } 
+void TransportCatalogue::AddBus(std::string_view bus, std::vector<std::string_view> bus_stops){
+    if (buses_.find(bus) != buses_.end()){
+        return;
     }
-    return length;
+    auto temp_bus = buses_str_.emplace(bus);
+    std::vector<std::string_view> temp_stops;
+    for (auto stop : bus_stops){
+        auto it_stop = stops_buses_.find(stop);
+        it_stop->second.insert(*temp_bus.first);                    
+        temp_stops.push_back(it_stop->first);
+    }
+    buses_.emplace(*temp_bus.first, TransportCatalogue::GetLength(bus_stops), GetDistance(bus_stops));
+    buses_stops_[*temp_bus.first] =  temp_stops;
 }
 
-const std::vector<std::string_view>* TransportCatalogue::GetBusStops(const std::string_view& bus){
-    if(auto iter = nbuses_.find(bus); iter != nbuses_.end()){
+const std::vector<std::string_view>* TransportCatalogue::GetBusStops(std::string_view bus){
+    if(auto iter = buses_stops_.find(bus); iter != buses_stops_.end()){
         return &(*iter).second;
     }
     return nullptr;    
 }
 
-const std::set<std::string_view>* TransportCatalogue::GetStopBuses(const std::string_view& stop){
-    if(auto iter = nstops_.find(stop); iter != nstops_.end()){
+const std::set<std::string_view>* TransportCatalogue::GetStopBuses(std::string_view stop){
+    if(auto iter = stops_buses_.find(stop); iter != stops_buses_.end()){
             return &iter->second;
     }
     return nullptr;
+}
+
+double TransportCatalogue::GetLength(std::vector<std::string_view> bus_stops) const{
+    double length = 0.;
+        for(auto it = bus_stops.begin(); it != prev(bus_stops.end()); it = next(it)){
+            length += geo::ComputeDistance( (*(stops_.find(*it))).location_ ,  (*(stops_.find(*next(it)))).location_ );
+        }
+    return length;
+}
+
+uint32_t TransportCatalogue::GetDistance(std::vector<std::string_view> bus_stops) const{
+    uint32_t distance = 0.;
+    for (auto it = bus_stops.begin(); it != prev(bus_stops.end()); it = next(it)){
+        auto it_stop_1 = stops_.find(*it);
+        if (auto it_stop_2 = it_stop_1->distances_.find(*next(it)); it_stop_2 !=  it_stop_1->distances_.end()){
+            distance += it_stop_2->second;
+        }
+        else {
+            auto it_stop_3 = stops_.find(*next(it));
+            if (auto it_stop_4 = it_stop_3->distances_.find(*it); it_stop_4 !=  it_stop_3->distances_.end()){
+                distance += it_stop_4->second;
+            }
+        }
+    }
+    return distance;
 }
 
 }
