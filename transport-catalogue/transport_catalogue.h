@@ -82,7 +82,10 @@ public:
     }
     size_t operator()(const Stop& stop)  const {
         return hasher(stop.stop_); 
-    }        
+    }
+    size_t operator()(std::pair<std::string_view, std::string_view> pair)  const {
+        return hasher(pair.first) + 13 * hasher(pair.second);
+    }  
 private:
     std::hash<std::string_view> hasher;
 };
@@ -95,19 +98,19 @@ public:
     
     void AddDistances(std::string_view stop, std::unordered_map<std::string_view, uint32_t> distances);
     
+    void AddDistance(std::string_view stop_1, std::string_view stop_2, uint32_t distance);
+    
     void AddBus(std::string_view bus, std::vector<std::string_view> bus_stops);
     
     const std::vector<std::string_view>* GetBusStops(std::string_view bus);
     
     const std::set<std::string_view>* GetStopBuses(std::string_view stop);
     
-    const double* GetBusLen(std::string_view bus) {
-        return &(buses_.find(bus) -> length_);
-    }
+    double GetBusLen(std::string_view bus) const;
     
-    const uint32_t* GetBusDist(std::string_view bus) {
-        return &(buses_.find(bus) -> distance_);
-    }    
+    uint32_t GetBusDist(std::string_view bus) const;    
+    
+    uint32_t GetDistance(std::string_view stop_1, std::string_view stop_2) const;
     
 private:
     std::set<std::string> stops_str_;
@@ -116,9 +119,10 @@ private:
     std::unordered_set<Bus, Hasher> buses_;    
     std::unordered_map<std::string_view, std::set<std::string_view>, Hasher> stops_buses_;
     std::unordered_map<std::string_view, std::vector<std::string_view>, Hasher> buses_stops_;
+    std::unordered_map<std::pair<std::string_view, std::string_view>, uint32_t, Hasher> distances_;
     
+    uint32_t GetDistanceBus(std::vector<std::string_view> bus_stops) const;
     double GetLength(std::vector<std::string_view> bus_stops) const;
-    uint32_t GetDistance(std::vector<std::string_view> bus_stops) const;
 };
 
 }

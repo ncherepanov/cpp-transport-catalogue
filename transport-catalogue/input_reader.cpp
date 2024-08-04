@@ -127,16 +127,14 @@ void InputReader::ParseLine(std::string_view line) {
 }
 
 std::unordered_map<string_view, uint32_t> ParseDistances(std::string_view str) {
-    
     std::vector<std::string_view> temp_dist =  Split(str, ',');
     if (temp_dist.size() < 3){
         return {};
     }
     std::unordered_map<string_view, uint32_t> result;
-    
     for (uint8_t i = 2; i < temp_dist.size(); ++i) {
-        std::vector<std::string_view> temp = Split(temp_dist[i], " to "sv);       
-        result[temp[1]] = std::stoi(std::string(temp[0].substr(0, temp[0].size() - 1)));
+        std::vector<std::string_view> temp = Split(temp_dist[i], " to "sv);
+        result[temp[1]] = std::stoi(string(temp[0].substr(0, temp[0].size() - 1)));
     }
     return result;
 }
@@ -150,7 +148,11 @@ void InputReader::ApplyCommands([[maybe_unused]] catalogue::TransportCatalogue& 
     }
     for(auto& command : commands_){
         if (command.command == "Stop"sv){
-            catalogue.AddDistances(command.id, ParseDistances(command.description));
+            auto distances = ParseDistances(command.description);
+            catalogue.AddDistances(command.id, distances);
+            for (auto [stop, distance] : distances){
+                catalogue.AddDistance(command.id, stop, distance);
+            }
         }
     }    
     for(auto& command : commands_){

@@ -15,8 +15,8 @@ void PrintBus(catalogue::TransportCatalogue& catalogue,
     }
     set<string_view> set_stops((*stops).begin(), (*stops).end());
     out << request << ": "sv << (*stops).size() << " stops on route, "sv 
-        << set_stops.size() << " unique stops, "sv << *catalogue.GetBusDist(bus)
-        << " route length, "sv << *catalogue.GetBusDist(bus)/(*catalogue.GetBusLen(bus)) << 
+        << set_stops.size() << " unique stops, "sv << catalogue.GetBusDist(bus)
+        << " route length, "sv << catalogue.GetBusDist(bus)/catalogue.GetBusLen(bus) << 
         " curvature"sv << endl;                                     
 }
     
@@ -51,13 +51,13 @@ void ParseAndPrintStat(catalogue::TransportCatalogue& catalogue,
         out << "Wrong request"sv << endl;
 }
 
-void GetFromCatalogue(std::istream& in, catalogue::TransportCatalogue& catalogue){
+void GetFromCatalogue(std::istream& in, catalogue::TransportCatalogue& catalogue, std::ostream& out){
     int stat_request_count;
     in >> stat_request_count >> ws;
     for (int i = 0; i < stat_request_count; ++i) {
         string line;
         getline(in, line);
-        ParseAndPrintStat(catalogue, line, cout);
+        ParseAndPrintStat(catalogue, line, out);
     }    
 }
 

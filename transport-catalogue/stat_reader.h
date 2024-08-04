@@ -10,7 +10,7 @@
 
 namespace outputspace{
                        
-void GetFromCatalogue(std::istream& in, catalogue::TransportCatalogue& catalogue);    
+void GetFromCatalogue(std::istream& in, catalogue::TransportCatalogue& catalogue, std::ostream& out);  
     
 }
 

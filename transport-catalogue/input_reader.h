@@ -12,7 +12,7 @@ namespace inputspace{
 
 struct CommandDescription {
     // Определяет, задана ли команда (поле command непустое)
-    explicit operator bool() const {
+    explicit operator bool() const { 
         return !command.empty();
     }
 
