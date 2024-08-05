@@ -139,7 +139,6 @@ std::unordered_map<string_view, uint32_t> ParseDistances(std::string_view str) {
     return result;
 }
 
-
 void InputReader::ApplyCommands([[maybe_unused]] catalogue::TransportCatalogue& catalogue) const {
     for(auto& command : commands_){
         if (command.command == "Stop"sv){
@@ -148,9 +147,7 @@ void InputReader::ApplyCommands([[maybe_unused]] catalogue::TransportCatalogue& 
     }
     for(auto& command : commands_){
         if (command.command == "Stop"sv){
-            auto distances = ParseDistances(command.description);
-            catalogue.AddDistances(command.id, distances);
-            for (auto [stop, distance] : distances){
+            for (auto [stop, distance] : ParseDistances(command.description)){
                 catalogue.AddDistance(command.id, stop, distance);
             }
         }

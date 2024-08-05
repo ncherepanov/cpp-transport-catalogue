@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <iostream>
-#include <iterator>
 #include <map>
 #include <set>
 #include <string>
@@ -16,22 +14,14 @@
 namespace catalogue{
 
 struct Stop{
-    Stop(std::string_view stop, geo::Coordinates location, 
-         std::unordered_map<std::string_view, uint32_t> distances)
-    :stop_(stop), location_(location), distances_(distances){}
+    Stop(std::string_view stop, geo::Coordinates location)
+    :stop_(stop), location_(location){}
     
     Stop(std::string_view stop)
-    :stop_(stop), location_({0., 0.}), distances_({}){}
+    :stop_(stop), location_({0., 0.}){}
     
-    Stop(const Stop& another){
-        stop_ = another.stop_;
-        location_ = another.location_;
-        distances_ = another.distances_;
-    }
-    
-    std::string_view stop_;
+    std::string stop_;
     geo::Coordinates location_;
-    std::unordered_map<std::string_view, uint32_t> distances_;
     
     bool operator==(const Stop& stop) const {
         return stop_ == stop.stop_;
@@ -54,7 +44,7 @@ struct Bus{
     Bus(std::string_view bus)
     :bus_(bus), length_(0), distance_(0){}    
     
-    std::string_view bus_;
+    std::string bus_;
     double length_;
     uint32_t distance_;
     
@@ -90,6 +80,20 @@ private:
     std::hash<std::string_view> hasher;
 };
 
+struct StopStatistics {
+    std::string_view stop;
+    geo::Coordinates location = {0, 0};
+    std::set<std::string_view> stop_buses;
+};
+
+struct BusRouteStatistics {
+    std::string_view bus;
+    uint16_t stops = 0;
+    uint16_t unique_stops = 0;
+    uint32_t distance = 0;
+    double curvature = 0.;
+};
+
 class TransportCatalogue {
     
 public:
@@ -102,9 +106,9 @@ public:
     
     void AddBus(std::string_view bus, std::vector<std::string_view> bus_stops);
     
-    const std::vector<std::string_view>* GetBusStops(std::string_view bus);
+    std::vector<std::string_view> GetBusStops(std::string_view bus) const;
     
-    const std::set<std::string_view>* GetStopBuses(std::string_view stop);
+    std::set<std::string_view> GetStopBuses(std::string_view stop) const;
     
     double GetBusLen(std::string_view bus) const;
     
@@ -112,9 +116,11 @@ public:
     
     uint32_t GetDistance(std::string_view stop_1, std::string_view stop_2) const;
     
+    StopStatistics GetStopStatistics(std::string_view stop) const;
+    
+    BusRouteStatistics GetRouteStatistics(std::string_view) const;
+    
 private:
-    std::set<std::string> stops_str_;
-    std::set<std::string> buses_str_;    
     std::unordered_set<Stop, Hasher> stops_;
     std::unordered_set<Bus, Hasher> buses_;    
     std::unordered_map<std::string_view, std::set<std::string_view>, Hasher> stops_buses_;
