@@ -22,11 +22,11 @@ void TransportCatalogue::AddDistance(string_view stop_1, string_view stop_2, uin
     }
 }
 
-void TransportCatalogue::AddBus(string_view bus, vector<string_view> bus_stops){
+void TransportCatalogue::AddBus(string_view bus, vector<string_view> bus_stops, bool roundtrip){
     if (buses_.find(bus) != buses_.end()){
         return;
     }
-    auto it_bus = buses_.emplace(string(bus), TransportCatalogue::GetLength(bus_stops), GetDistanceBus(bus_stops));
+    auto it_bus = buses_.emplace(string(bus), TransportCatalogue::GetLength(bus_stops), GetDistanceBus(bus_stops), roundtrip);
     for (auto& stop : bus_stops){
         auto it_stop = stops_buses_.find(stop);
         stop = it_stop->first;
@@ -65,24 +65,24 @@ uint32_t TransportCatalogue::GetDistance(string_view stop_1, string_view stop_2)
     return distance;
 }
 
-StopStatistics TransportCatalogue::GetStopStatistics(std::string_view stop) const {
+StopStatistic TransportCatalogue::GetStopStatistic(std::string_view stop) const {
     auto it_stop = stops_.find(stop);
     if(it_stop == stops_.end()){
         return {};
     }
-    StopStatistics stop_stat;
+    StopStatistic stop_stat;
     stop_stat.stop = it_stop->stop_;
     stop_stat.location = it_stop->location_;
     stop_stat.stop_buses = GetStopBuses(stop);
     return stop_stat;
 }
 
-BusRouteStatistics TransportCatalogue::GetRouteStatistics(std::string_view bus) const {
+BusRouteStatistic TransportCatalogue::GetRouteStatistic(std::string_view bus) const {
     auto it_bus = buses_.find(bus);
     if(it_bus == buses_.end()){
         return {};
     }
-    BusRouteStatistics route_stat;
+    BusRouteStatistic route_stat;
     route_stat.bus = it_bus->bus_;
     vector <string_view> stops = GetBusStops(bus);
     route_stat.stops = stops.size();
@@ -95,7 +95,7 @@ BusRouteStatistics TransportCatalogue::GetRouteStatistics(std::string_view bus) 
 
 uint32_t TransportCatalogue::GetDistanceBus(vector<string_view> stops) const {
     uint32_t distance = 0.;
-    for (auto i = 0; i < stops.size()-1; ++i){
+    for (size_t i = 0; i < stops.size()-1; ++i) {
         distance += GetDistance(stops[i], stops[i+1]);
     }
     return distance;

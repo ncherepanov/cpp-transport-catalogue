@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <map>
 #include <set>
 #include <string>
@@ -10,89 +11,9 @@
 #include <unordered_set>
 
 #include "geo.h"
+#include "domain.h"
 
 namespace catalogue{
-
-struct Stop{
-    Stop(std::string_view stop, geo::Coordinates location)
-    :stop_(stop), location_(location){}
-    
-    Stop(std::string_view stop)
-    :stop_(stop), location_({0., 0.}){}
-    
-    std::string stop_;
-    geo::Coordinates location_;
-    
-    bool operator==(const Stop& stop) const {
-        return stop_ == stop.stop_;
-    }
-    bool operator==(const std::string_view& stop) const {
-        return stop_ == stop;
-    }
-    bool operator<(const Stop& stop) const {
-        return stop_ < stop.stop_;
-    }
-    bool operator<(const std::string_view& stop) const {
-        return stop_ < stop;
-    }    
-};
-
-struct Bus{
-    Bus(std::string_view bus, double length, uint32_t distance)
-    :bus_(bus), length_(length), distance_(distance){}
-        
-    Bus(std::string_view bus)
-    :bus_(bus), length_(0), distance_(0){}    
-    
-    std::string bus_;
-    double length_;
-    uint32_t distance_;
-    
-    bool operator==(const Bus& bus) const {
-        return bus_ == bus.bus_;
-    }
-    bool operator==(const std::string_view& bus) const {
-        return bus_ == bus;
-    }
-    bool operator<(const Bus& bus) const {
-        return bus_ < bus.bus_;
-    }
-    bool operator<(const std::string_view& bus) const {
-        return bus_ < bus;
-    }    
-};
-
-class Hasher {
-public:
-    size_t operator()(std::string_view name)  const {
-        return hasher(name); 
-    }
-    size_t operator()(const Bus& bus)  const {
-        return hasher(bus.bus_); 
-    }
-    size_t operator()(const Stop& stop)  const {
-        return hasher(stop.stop_); 
-    }
-    size_t operator()(std::pair<std::string_view, std::string_view> pair)  const {
-        return hasher(pair.first) + 13 * hasher(pair.second);
-    }  
-private:
-    std::hash<std::string_view> hasher;
-};
-
-struct StopStatistics {
-    std::string_view stop;
-    geo::Coordinates location = {0, 0};
-    std::set<std::string_view> stop_buses;
-};
-
-struct BusRouteStatistics {
-    std::string_view bus;
-    uint16_t stops = 0;
-    uint16_t unique_stops = 0;
-    uint32_t distance = 0;
-    double curvature = 0.;
-};
 
 class TransportCatalogue {
     
@@ -104,7 +25,7 @@ public:
     
     void AddDistance(std::string_view stop_1, std::string_view stop_2, uint32_t distance);
     
-    void AddBus(std::string_view bus, std::vector<std::string_view> bus_stops);
+    void AddBus(std::string_view bus, std::vector<std::string_view> bus_stops, bool roundtrip);
     
     std::vector<std::string_view> GetBusStops(std::string_view bus) const;
     
@@ -116,9 +37,15 @@ public:
     
     uint32_t GetDistance(std::string_view stop_1, std::string_view stop_2) const;
     
-    StopStatistics GetStopStatistics(std::string_view stop) const;
+    StopStatistic GetStopStatistic(std::string_view stop) const;
     
-    BusRouteStatistics GetRouteStatistics(std::string_view) const;
+    BusRouteStatistic GetRouteStatistic(std::string_view) const;
+    
+    auto& GetStops() const { return stops_; }
+    auto& GetBuses() const { return buses_; }
+    auto& GetStopsBuses() const { return stops_buses_; }
+    auto& GetBusesStops() const { return buses_stops_; }
+    auto& GetDistances() const { return distances_; }    
     
 private:
     std::unordered_set<Stop, Hasher> stops_;
