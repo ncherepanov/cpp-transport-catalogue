@@ -3,6 +3,7 @@
 #define TO_STR(x) std::to_string(x)
 #include <cstdint>
 #include <cmath>
+#include <deque>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -219,7 +220,6 @@ public:
     virtual ~ObjectContainer() = default;
 
 protected:
-    //~ObjectContainer() = default;
     std::deque<std::unique_ptr<Object>> objects_;
 };
     
@@ -306,8 +306,6 @@ public:
     // Выводит в ostream svg-представление документа
     void Render(std::ostream& out) const;
     // Прочие методы и данные, необходимые для реализации класса Document
-//private:
-//    std::deque <std::unique_ptr<Object>> objects_;
 };
 
 }  // namespace svg

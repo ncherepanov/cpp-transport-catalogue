@@ -9,7 +9,7 @@ void TransportCatalogue::AddStop(string_view stop, const geo::Coordinates& locat
     if (stops_.find(stop) != stops_.end()){
         return;
     }
-    auto it_stop = stops_.emplace(string(stop), location);
+    auto it_stop = stops_.emplace(move(stop), location);
     stops_buses_[it_stop.first->stop_] = {};
 }
 
@@ -22,11 +22,11 @@ void TransportCatalogue::AddDistance(string_view stop_1, string_view stop_2, uin
     }
 }
 
-void TransportCatalogue::AddBus(string_view bus, vector<string_view> bus_stops, bool roundtrip){
+void TransportCatalogue::AddBus(string_view bus, vector<string_view>& bus_stops, bool roundtrip){
     if (buses_.find(bus) != buses_.end()){
         return;
     }
-    auto it_bus = buses_.emplace(string(bus), TransportCatalogue::GetLength(bus_stops), GetDistanceBus(bus_stops), roundtrip);
+    auto it_bus = buses_.emplace(move(bus), TransportCatalogue::GetLength(bus_stops), GetDistanceBus(bus_stops), roundtrip);
     for (auto& stop : bus_stops){
         auto it_stop = stops_buses_.find(stop);
         stop = it_stop->first;

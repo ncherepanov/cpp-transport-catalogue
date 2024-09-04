@@ -21,11 +21,9 @@ public:
 
     void AddStop(std::string_view stop, const geo::Coordinates& point);
     
-    void AddDistances(std::string_view stop, std::unordered_map<std::string_view, uint32_t> distances);
-    
     void AddDistance(std::string_view stop_1, std::string_view stop_2, uint32_t distance);
     
-    void AddBus(std::string_view bus, std::vector<std::string_view> bus_stops, bool roundtrip);
+    void AddBus(std::string_view bus, std::vector<std::string_view>& bus_stops, bool roundtrip);
     
     std::vector<std::string_view> GetBusStops(std::string_view bus) const;
     

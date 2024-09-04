@@ -17,11 +17,6 @@ struct Stop{
     Stop(std::string_view stop)
     :stop_(stop), location_(0., 0.){}
     
-    /*Stop(const Stop& another){
-        stop_ = another.stop_;
-        location_ = another.location_;
-    }*/
-    
     std::string stop_;
     geo::Coordinates location_;
     

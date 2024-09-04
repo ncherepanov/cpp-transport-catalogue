@@ -31,24 +31,41 @@ private:
     double zoom_coeff_ = 0.;
     bool IsZero(double value);
 };
-    
+
 class MapRenderer {
 public:
-    MapRenderer(Catalogue& catalogue, Reader& reader);
-
-    uint32_t GetPaletteSize() const;
-    svg::Color GetColor(uint32_t line_number) const;
-    void AddSettingsToPolyline(svg::Polyline& polyline, uint32_t line_num) const;
-    void AddLineCapJoinText(svg::Text& text) const; 
-    void AddSettingText(svg::Text& text, bool is_underlayer, bool is_bus, svg::Point pos, 
-                        std::string data, svg::Color item_color/* = svg::NoneColor*/) const;    
-    
+    MapRenderer(const Catalogue& catalogue, Reader& reader);
     void GetMap(std::ostream& out) const;
-    
 private:
-    Catalogue& catalogue_;
+    const Catalogue& catalogue_;
     Reader& reader_;
     RenderSettings settings_;
+};
+
+class MapCreator {
+public:    
+    MapCreator(const Catalogue& catalogue, const RenderSettings& settings);
+    
+    void AddSettingsToPolyline(svg::Polyline& polyline, uint32_t line_num) const;
+    void AddLineCapJoinText(svg::Text& text) const; 
+    void AddFontWeight(svg::Text& text, std::string str);
+    void AddSettingText(svg::Text& text, bool is_underlayer, bool is_bus, svg::Point pos, 
+                        std::string data, svg::Color item_color) const;
+
+    void ConstructorPolyline();
+    void ConstructorTxtBus();
+    void ConstructorCircle();
+    void ConstructorTxtStop();    
+    const svg::Document* GetDoc() ;                  
+
+private:    
+    const Catalogue& catalogue_;
+    const RenderSettings& settings_;
+    svg::Document doc_;
+    std::map<std::string_view, std::vector<std::string_view>> buses_stops_; //маршруты отсортированные по наименованию
+    std::map<std::string_view, uint32_t> bus_color_;                        //маршруты и их цвета
+    std::map<std::string_view, svg::Point> all_stop_;                       //для вывода слоёв кругов и наименований остановок
+    std::vector<std::pair<std::string_view, std::string_view>> all_bus_;    //для вывода наименований маршрутов
 };
  
 // points_begin и points_end задают начало и конец интервала элементов geo::Coordinates
