@@ -56,7 +56,7 @@ public:
     void ConstructorTxtBus();
     void ConstructorCircle();
     void ConstructorTxtStop();    
-    const svg::Document* GetDoc() ;                  
+    const svg::Document* GetDoc();                  
 
 private:    
     const Catalogue& catalogue_;

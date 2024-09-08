@@ -127,7 +127,7 @@ const svg::Document* MapCreator::GetDoc() {
 MapRenderer::MapRenderer(const Catalogue& catalogue, Reader& reader) 
 : catalogue_(catalogue), reader_(reader) {
 
-    const json::Dict& map = reader.Request("render_settings"s).AsMap();
+    const json::Dict& map = reader.Request("render_settings"s).AsDict();
 
     if (map.at("stop_label_offset"s).IsArray()) {
         auto stop_lab_offset = map.at("stop_label_offset"s).AsArray();

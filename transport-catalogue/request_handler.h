@@ -10,6 +10,7 @@
 
 #include "domain.h"
 #include "json.h"
+#include "json_builder.h"
 #include "json_reader.h"
 #include "map_renderer.h"
 #include "transport_catalogue.h"
@@ -31,9 +32,9 @@ private:
     Reader& reader_;
     json::Array arr_;
     
-    json::Dict GetJsonMap(const json::Node id);
-    json::Dict GetStop(const json::Node id, std::string_view name);
-    json::Dict GetBus(const json::Node id, std::string_view name);
+    json::Node GetJsonMap(const int id);
+    json::Node GetStop(const int id, std::string_view name);
+    json::Node GetBus(const int id, std::string_view name);
 };
 
 }

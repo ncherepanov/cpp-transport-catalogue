@@ -17,15 +17,15 @@ JsonReader::JsonReader(std::istream& in, catalogue::TransportCatalogue& catalogu
 }
 
 const json::Node& JsonReader::Request(const std::string& request) const {
-    if (!in_.GetRoot().AsMap().count(request)) { 
+    if (!in_.GetRoot().AsDict().count(request)) { 
         return null;
     }
-    return in_.GetRoot().AsMap().at(request);
+    return in_.GetRoot().AsDict().at(request);
 }
 
 void JsonReader::FuncAddStop(const json::Array& arr) {
     for (auto& items : arr) {
-        const auto& map = items.AsMap();
+        const auto& map = items.AsDict();
         const std::string& name = map.at("name"s).AsString();
         if (map.at("type"s).AsString() == "Stop"s) {
             catalogue_.AddStop(name, {map.at("latitude"s).AsDouble(), map.at("longitude"s).AsDouble()});
@@ -35,10 +35,10 @@ void JsonReader::FuncAddStop(const json::Array& arr) {
 
 void JsonReader::FuncAddDist(const json::Array& arr) {
     for (auto& items : arr) {
-        const auto& map = items.AsMap();
+        const auto& map = items.AsDict();
         const std::string& name = map.at("name"s).AsString();
         if (map.at("type"s).AsString() == "Stop"s) {
-            for (auto [stop, distance] : map.at("road_distances"s).AsMap()){
+            for (auto [stop, distance] : map.at("road_distances"s).AsDict()){
                 catalogue_.AddDistance(name, stop, distance.AsInt());
             }
         }
@@ -47,7 +47,7 @@ void JsonReader::FuncAddDist(const json::Array& arr) {
     
 void JsonReader::FuncAddBus(const json::Array& arr) {
     for (auto& items : arr) {
-        const auto& map = items.AsMap();
+        const auto& map = items.AsDict();
         const std::string& name = map.at("name"s).AsString();
         if (map.at("type"s).AsString() == "Bus"s) {
             std::vector<std::string_view> stops;

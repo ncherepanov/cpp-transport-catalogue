@@ -13,7 +13,6 @@ int main() {
 	catalogue::TransportCatalogue catalogue;
 	
 	json_reader::JsonReader reader(cin, catalogue);
-	//reader.AddToCatalogue(catalogue);
 	
 	request_handler::RequestHandler handler(catalogue, reader);
 	handler.OutputArray(cout);	
