@@ -2,44 +2,86 @@
  
 #include "json.h"
 #include <string>
-#include <map>
 #include <memory>
-#include <set>
-#include <vector>
  
 namespace json {
-    
-struct Inspector {
-    char last_action_ = 'z';   //начальное значение - z
-    std::vector<bool> map_or_arr_; // контроль нахождения в слоях словарей и/или массивов
-    const std::map<char, std::set<char>> valid_operation_ = 
-    { {'z', {'k', 'c', 'e'}}, {'a', {'b', 'c', 'e'}}, {'b', {'a', 'd'}}, {'j', {'b', 'c', 'e', 'f', 'j'}}, {'k', {'z'}}, 
-      {'c', {'a', 'd'}}, {'d', {'b', 'j', 'c', 'e'}}, {'e', {'j', 'c', 'f'}}, {'f', {'b', 'j', 'c', 'e', 'd'}}};
-};
 
+class KeyItemContext;
+class DictItemContext;
+class ArrItemContext;
+ 
 class Builder {
 public:
+
+    KeyItemContext Key(std::string key);
     
-    Builder& Key(std::string key);         // a
+    DictItemContext StartDict();
     
-    Builder& Value(Node::Value value);     // b j k : b-map j-arr  k - simple value
-    
-    Builder& StartDict();                  // c
-    
-    Builder& EndDict();                    // d
-    
-    Builder& StartArray();                 // e
-    
-    Builder& EndArray();                   // f
-    
+    ArrItemContext StartArray();
+ 
+    Builder& Value(Node::Value value);
+ 
+    Builder& EndDict();
+ 
+    Builder& EndArray();
+ 
     Node Build();
     
     void AddNode(Node node);
-    
+ 
 private:
-    Node node_; 
-    std::vector<std::unique_ptr<Node>>nodes_;
-    Inspector inspector_;
+    Node node_;
+    std::vector<std::unique_ptr<Node>> nodes_;
+ 
 };
+ 
+class BaseContext {
+public:
+    BaseContext(Builder& builder);
+ 
+    KeyItemContext Key(std::string key);
     
+    DictItemContext StartDict();
+    
+    ArrItemContext StartArray();
+ 
+    Builder& Value(Node::Value value);
+ 
+    Builder& EndDict();
+ 
+    Builder& EndArray();
+ 
+private:
+    Builder& builder_;
+};
+ 
+class KeyItemContext : public BaseContext {
+public:
+    KeyItemContext(Builder& builder);
+ 
+    KeyItemContext Key(std::string key) = delete;
+    BaseContext EndDict() = delete;
+    BaseContext EndArray() = delete;
+    DictItemContext Value(Node::Value value);
+};
+ 
+class DictItemContext : public BaseContext {
+public:
+    DictItemContext(Builder& builder);
+ 
+    DictItemContext StartDict() = delete;
+    ArrItemContext StartArray() = delete;
+    Builder& EndArray() = delete;
+    Builder& Value(Node::Value value) = delete;
+};
+ 
+class ArrItemContext : public BaseContext {
+public:
+    ArrItemContext(Builder& builder);
+ 
+    KeyItemContext Key(std::string key) = delete;
+    Builder& EndDict() = delete;
+    ArrItemContext Value(Node::Value value);
+};
+
 }

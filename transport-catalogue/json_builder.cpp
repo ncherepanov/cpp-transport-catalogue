@@ -37,27 +37,57 @@ void Builder::AddNode(Node node) {
     }
 }
     
-Builder& Builder::Key(std::string key) {
-    const char action = 'a';
-    if (!inspector_.valid_operation_.at(inspector_.last_action_).count(action) || !inspector_.map_or_arr_.back())
-        throw std::logic_error("Error key");
-    inspector_.last_action_ = action;
-
+KeyItemContext Builder::Key(std::string key) { 
     if (nodes_.empty())
         throw std::logic_error("Error creating key");
     auto key_ptr = std::make_unique<Node>(key);
     if (nodes_.back()->IsDict()) {
         nodes_.emplace_back(std::move(key_ptr));
     }
+    return KeyItemContext(*this);
+}
+    
+DictItemContext Builder::StartDict() {
+    nodes_.emplace_back(std::move(std::make_unique<Node>(Dict())));
+    return DictItemContext(*this);
+}
+    
+Builder& Builder::EndDict() {
+    if (nodes_.empty())
+        throw std::logic_error("Error - closing without opening");
+    Node node = *nodes_.back();
+    if (!node.IsDict())
+        throw std::logic_error("Error. Not dictionary");
+    nodes_.pop_back();
+    AddNode(node);
     return *this;
 }
     
-Builder& Builder::Value(Node::Value value) {
-    const char action = inspector_.map_or_arr_.empty() ? 'k' : inspector_.map_or_arr_.back() ? 'b' : 'j';
-    if (!inspector_.valid_operation_.at(inspector_.last_action_).count(action))
-        throw std::logic_error("Error value");
-    inspector_.last_action_ = action;
+ArrItemContext Builder::StartArray() {
+    nodes_.emplace_back(std::move(std::make_unique<Node>(Array())));
+    return ArrItemContext(*this);
+}
     
+Builder& Builder::EndArray() {
+    if (nodes_.empty())
+        throw std::logic_error("Error - closing without opening");
+    Node node = *nodes_.back();
+    if (!node.IsArray())
+        throw std::logic_error("Error. Not array");
+    nodes_.pop_back();
+    AddNode(node);
+    return *this;    
+}
+    
+Node Builder::Build() {
+    if (node_.IsNull())
+        throw std::logic_error("Error - creating empty JSON");
+    if (!nodes_.empty())
+        throw std::logic_error("Error - nothing to create");    
+    return node_;
+}
+
+Builder& Builder::Value(Node::Value value) {
     Node node;
     if (std::holds_alternative<bool>(value)) 
         node = std::get<bool>(value);
@@ -71,76 +101,44 @@ Builder& Builder::Value(Node::Value value) {
         node = std::move(std::get<Array>(value));
     else if (std::holds_alternative<Dict>(value)) 
         node = std::move(std::get<Dict>(value));
+    else node = Node();    
     AddNode(node);
     return *this;
 }
-    
-Builder& Builder::StartDict() {
-    const char action = 'c';
-    if (!inspector_.valid_operation_.at(inspector_.last_action_).count(action))
-        throw std::logic_error("Error start dict");
-    inspector_.map_or_arr_.emplace_back(true);
-    inspector_.last_action_ = action;
-    
-    nodes_.emplace_back(std::move(std::make_unique<Node>(Dict())));
-    return *this;    
-}
-    
-Builder& Builder::EndDict() {
-    const char action = 'd';
-    if (!inspector_.valid_operation_.at(inspector_.last_action_).count(action) || !inspector_.map_or_arr_.back())
-        throw std::logic_error("Error end dict");
-    inspector_.map_or_arr_.pop_back();
-    inspector_.last_action_ = action;
-    
-    if (nodes_.empty())
-        throw std::logic_error("Error - closing without opening");
-    Node node = *nodes_.back();
-    if (!node.IsDict())
-        throw std::logic_error("Error. Not dictionary");
-    nodes_.pop_back();
-    AddNode(node);
-    return *this;
-}
-    
-Builder& Builder::StartArray() {
-    const char action = 'e';
-    if (!inspector_.valid_operation_.at(inspector_.last_action_).count(action))
-        throw std::logic_error("Error start arr");
-    inspector_.map_or_arr_.emplace_back(false);
-    inspector_.last_action_ = action;
-    
-    nodes_.emplace_back(std::move(std::make_unique<Node>(Array())));
-    return *this;
-}
-    
-Builder& Builder::EndArray() {
-    const char action = 'f';
-    if (!inspector_.valid_operation_.at(inspector_.last_action_).count(action) || inspector_.map_or_arr_.back())
-        throw std::logic_error("Error end arr");
-    inspector_.map_or_arr_.pop_back();
-    inspector_.last_action_ = action;
 
-    if (nodes_.empty())
-        throw std::logic_error("Error - closing without opening");
-    Node node = *nodes_.back();
-    if (!node.IsArray())
-        throw std::logic_error("Error. Not array");
-    nodes_.pop_back();
-    AddNode(node);
-    return *this;    
+BaseContext::BaseContext(Builder& builder) 
+: builder_(builder) { }
+KeyItemContext BaseContext::Key(std::string key) {
+    return builder_.Key(key);
 }
-    
-Node Builder::Build() {
-    if (!inspector_.map_or_arr_.empty() || inspector_.last_action_ == 'a'|| inspector_.last_action_ == 'b'
-        || inspector_.last_action_ == 'j'|| inspector_.last_action_ == 'c'|| inspector_.last_action_ == 'e')
-        throw std::logic_error("Error - build");
-    if (node_.IsNull())
-        throw std::logic_error("Error - creating empty JSON");
-    if (!nodes_.empty())
-        throw std::logic_error("Error - nothing to create");
-    inspector_.last_action_ = 'z';
-    return node_;
+Builder& BaseContext::Value(Node::Value value) {
+    return builder_.Value(value);
+}
+DictItemContext BaseContext::StartDict() {
+    return DictItemContext(builder_.StartDict());
+}
+Builder& BaseContext::EndDict() {
+    return builder_.EndDict();
+}
+ArrItemContext BaseContext::StartArray() {
+    return ArrItemContext(builder_.StartArray());
+}
+Builder& BaseContext::EndArray() {
+    return builder_.EndArray();
+}
+KeyItemContext::KeyItemContext(Builder& builder) 
+: BaseContext(builder) { }
+DictItemContext  KeyItemContext::Value(Node::Value value) {
+    return BaseContext::Value(std::move(value));
+}
+DictItemContext::DictItemContext(Builder& builder) 
+: BaseContext(builder) { }
+ 
+ArrItemContext::ArrItemContext(Builder& builder) 
+: BaseContext(builder) { }
+ 
+ArrItemContext ArrItemContext::Value (Node::Value value) {
+    return BaseContext::Value(move(value)); 
 }
     
 }
