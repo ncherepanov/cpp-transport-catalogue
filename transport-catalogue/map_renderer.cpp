@@ -124,7 +124,7 @@ const svg::Document* MapCreator::GetDoc() {
     return &doc_;
 }
 
-MapRenderer::MapRenderer(const Catalogue& catalogue, Reader& reader) 
+MapRenderer::MapRenderer(const Catalogue& catalogue, const Reader& reader) 
 : catalogue_(catalogue), reader_(reader) {
 
     const json::Dict& map = reader.Request("render_settings"s).AsDict();

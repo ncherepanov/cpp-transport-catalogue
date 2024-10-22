@@ -110,3 +110,31 @@ struct RenderSettings {
 };
 
 }
+
+namespace router {
+    
+struct RoutingSettings {
+    double bus_wait_time_ = 0.;
+    double bus_velocity_ = 0.;
+};
+
+struct RoutingPoints {
+    std::string_view from_;
+    std::string_view to_;
+};
+
+struct RouteSection {
+    std::string_view type_;     // Wait or Bus
+    std::string_view name_;
+    double time_ = 0.;
+    int count_ = 0;
+};
+
+struct Route {
+    std::vector<RouteSection> route_;
+    double total_time_ = 0.;
+};  
+    
+}
+
+

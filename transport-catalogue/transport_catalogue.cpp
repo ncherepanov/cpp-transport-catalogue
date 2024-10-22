@@ -5,34 +5,48 @@ using namespace  std;
 
 namespace catalogue{
 
-void TransportCatalogue::AddStop(string_view stop, const geo::Coordinates& location){
-    if (stops_.find(stop) != stops_.end()){
+void TransportCatalogue::AddStop(string_view stop, const geo::Coordinates& location) {
+    if (stops_.find(stop) != stops_.end()) {
         return;
     }
     auto it_stop = stops_.emplace(move(stop), location);
     stops_buses_[it_stop.first->stop_] = {};
 }
 
-void TransportCatalogue::AddDistance(string_view stop_1, string_view stop_2, uint32_t distance){
+void TransportCatalogue::AddDistance(string_view stop_1, string_view stop_2, uint32_t distance) {
     stop_1 = stops_.find(stop_1)->stop_;
     stop_2 = stops_.find(stop_2)->stop_;
-    distances_[{stop_1, stop_2}] = distance;
-    if (distances_.find({stop_2, stop_1}) == distances_.end()) {
-        distances_[{stop_2, stop_1}] = distance;
+    distances_buf_[{stop_1, stop_2}] = distance;
+    if (distances_buf_.find({stop_2, stop_1}) == distances_buf_.end()) {
+        distances_buf_[{stop_2, stop_1}] = distance;
     }
 }
 
-void TransportCatalogue::AddBus(string_view bus, vector<string_view>& bus_stops, bool roundtrip){
-    if (buses_.find(bus) != buses_.end()){
+void TransportCatalogue::AddBus(string_view bus, vector<string_view>& bus_stops, bool roundtrip) {
+    if (buses_.find(bus) != buses_.end()) {
         return;
     }
-    auto it_bus = buses_.emplace(move(bus), TransportCatalogue::GetLength(bus_stops), GetDistanceBus(bus_stops), roundtrip);
     for (auto& stop : bus_stops){
         auto it_stop = stops_buses_.find(stop);
         stop = it_stop->first;
-        it_stop->second.insert(it_bus.first->bus_);      
+        it_stop->second.insert(bus);      
     }
-    buses_stops_[it_bus.first->bus_] = bus_stops;
+    buses_stops_[bus] = bus_stops;
+    std::map<std::pair<std::string_view, std::string_view>, int> span_num;
+    for (size_t i = 0; i < bus_stops.size() - 1; ++i) {
+        span_bus_[{bus_stops[i], bus_stops[i + 1]}].emplace(bus);
+        span_num[{bus_stops[i], bus_stops[i + 1]}] = i;
+        auto it_frwrd = distances_buf_.find({bus_stops[i], bus_stops[i+1]});
+        auto it_bwrd = distances_buf_.find({bus_stops[i + 1], bus_stops[i]});
+        bool finded_frwrd = it_frwrd != distances_buf_.end();
+        bool finded_bwrd = it_bwrd != distances_buf_.end();
+        distances_[{bus_stops[i], bus_stops[i + 1]}] = !finded_frwrd ? it_bwrd->second : it_frwrd->second;
+        if (!roundtrip) {
+            distances_[{bus_stops[i+1], bus_stops[i]}] = !finded_bwrd ? it_frwrd->second : it_bwrd->second;
+        }
+    }
+    span_num_bus_[bus] = span_num;
+    buses_.emplace(move(bus), TransportCatalogue::GetLength(bus_stops), GetDistanceBus(bus_stops), roundtrip);
 }
 
 vector<string_view> TransportCatalogue::GetBusStops(string_view bus) const {
@@ -94,7 +108,7 @@ BusRouteStatistic TransportCatalogue::GetRouteStatistic(std::string_view bus) co
 }
 
 uint32_t TransportCatalogue::GetDistanceBus(vector<string_view> stops) const {
-    uint32_t distance = 0.;
+    uint32_t distance = 0;
     for (size_t i = 0; i < stops.size()-1; ++i) {
         distance += GetDistance(stops[i], stops[i+1]);
     }

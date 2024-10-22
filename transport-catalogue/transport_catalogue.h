@@ -43,14 +43,19 @@ public:
     auto& GetBuses() const { return buses_; }
     auto& GetStopsBuses() const { return stops_buses_; }
     auto& GetBusesStops() const { return buses_stops_; }
-    auto& GetDistances() const { return distances_; }    
+    auto& GetDistances() const { return distances_; }
+    auto& GetSpanBus() const { return span_bus_; }
+    auto& GetSpanNum(std::string_view bus) const { return span_num_bus_. at(bus); }
     
 private:
     std::unordered_set<Stop, Hasher> stops_;
     std::unordered_set<Bus, Hasher> buses_;    
     std::unordered_map<std::string_view, std::set<std::string_view>, Hasher> stops_buses_;
     std::unordered_map<std::string_view, std::vector<std::string_view>, Hasher> buses_stops_;
+    std::unordered_map<std::pair<std::string_view, std::string_view>, uint32_t, Hasher> distances_buf_;
     std::unordered_map<std::pair<std::string_view, std::string_view>, uint32_t, Hasher> distances_;
+    std::unordered_map<std::pair<std::string_view, std::string_view>, std::set<std::string_view>, Hasher> span_bus_;
+    std::unordered_map<std::string_view, std::map<std::pair<std::string_view, std::string_view>, int>, Hasher> span_num_bus_;
     
     uint32_t GetDistanceBus(std::vector<std::string_view> bus_stops) const;
     double GetLength(std::vector<std::string_view> bus_stops) const;

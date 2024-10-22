@@ -34,11 +34,11 @@ private:
 
 class MapRenderer {
 public:
-    MapRenderer(const Catalogue& catalogue, Reader& reader);
+    MapRenderer(const Catalogue& catalogue, const Reader& reader);
     void GetMap(std::ostream& out) const;
 private:
     const Catalogue& catalogue_;
-    Reader& reader_;
+    const Reader& reader_;
     RenderSettings settings_;
 };
 
@@ -62,6 +62,7 @@ private:
     const Catalogue& catalogue_;
     const RenderSettings& settings_;
     svg::Document doc_;
+    
     std::map<std::string_view, std::vector<std::string_view>> buses_stops_; //маршруты отсортированные по наименованию
     std::map<std::string_view, uint32_t> bus_color_;                        //маршруты и их цвета
     std::map<std::string_view, svg::Point> all_stop_;                       //для вывода слоёв кругов и наименований остановок

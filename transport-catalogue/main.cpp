@@ -3,17 +3,19 @@
 #include <string>
 
 #include "json_reader.h"
-#include "request_handler.h"
 #include "map_renderer.h"
+#include "request_handler.h"
+
 
 using namespace std;
 
 int main() {
-
-	catalogue::TransportCatalogue catalogue;
+    
+    catalogue::TransportCatalogue catalogue;
+    
+    json_reader::JsonReader reader(cin, catalogue);
 	
-	json_reader::JsonReader reader(cin, catalogue);
+    request_handler::RequestHandler handler(catalogue, reader);
+    handler.OutputArray(cout);
 	
-	request_handler::RequestHandler handler(catalogue, reader);
-	handler.OutputArray(cout);	
 }

@@ -109,16 +109,16 @@ Text& Text::SetData(std::string data) {
         return *this;
     }
  
-std::string Text::Decode(std::string data) {
+/*std::string Text::Decode(std::string data) {
     const std::unordered_map <char, std::string> tab = 
-        {{'"',  "&quot;"s}, {'\'', "&apos;"s}, {'`', "&apos;"s}, {'>', "&gt;"s}, {'<', "&lt"s}, {'&', "&amp;"s}};
+        {{'"',  """s}, {'\'', "&apos;"s}, {'`', "&apos;"s}, {'>', ">"s}, {'<', "<"s}, {'&', "&"s}};
     for (const auto& [ch, str] : tab){
         if (auto it = data.find(ch); it != std::string::npos)
             data.replace(it, 1, str);
     } 
     return data;
-}
-// &quot &apos &apos &apos &gt &lt &amp
+}*/
+// &quot &apos &apos &gt &lt &amp
     
 void Text::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
@@ -131,8 +131,8 @@ void Text::RenderObject(const RenderContext& context) const {
         out << " font-family=\""sv << font_family_  << "\""sv;  
     if (!font_weight_.empty()) 
         out << " font-weight=\""sv << font_weight_  << "\""sv;
-    out << ">"sv << Decode(data_) << "</text>"sv;
-    //out << ">"sv << data_ << "</text>"sv;
+    //out << ">"sv << Decode(data_) << "</text>"sv;
+    out << ">"sv << data_ << "</text>"sv;
 }
 //<text x="35" y="20" dx="0" dy="6" font-size="12" font-family="Verdana" font-weight="bold">Hello C++</text>
 // ---------- Document----------------------
