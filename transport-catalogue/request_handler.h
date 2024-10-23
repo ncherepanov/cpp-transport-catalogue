@@ -40,6 +40,7 @@ private:
     json::Node GetJsonMap(const int id);
     json::Node GetStop(const int id, std::string_view name);
     json::Node GetBus(const int id, std::string_view name);
+    router::RoutingSettings GetRoutingSettings();
 };
 
 }

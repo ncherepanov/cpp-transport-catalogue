@@ -3,9 +3,8 @@
 
 namespace router {
 
-	TransportRouter::TransportRouter(const Catalogue& catalogue, const Reader& reader)
-		: catalogue_(catalogue), reader_(reader), graph_(STOPS.size() * 2) {
-		GetRoutingSettings();
+	TransportRouter::TransportRouter(const Catalogue& catalogue, RoutingSettings settings)
+		: catalogue_(catalogue), settings_(settings), graph_(STOPS.size() * 2) {
 		BuildGraph();
 	}
 
@@ -21,13 +20,6 @@ namespace router {
 			result.route_.emplace_back(RouteSection{ section_type, edge_data.edge_name, edge_data.weight, edge_data.span_count });
 		}
 		return result;
-	}
-
-	void TransportRouter::GetRoutingSettings() {
-		static const double km_hour_to_metr_min = 1000. / 60;
-		const json::Dict& map = reader_.Request("routing_settings"s).AsDict();
-		settings_.bus_wait_time_ = map.at("bus_wait_time"s).AsDouble();
-		settings_.bus_velocity_ = map.at("bus_velocity"s).AsDouble() * km_hour_to_metr_min;
 	}
 
 	void TransportRouter::BuildGraph() {

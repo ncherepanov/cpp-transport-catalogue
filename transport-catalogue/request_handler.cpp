@@ -6,7 +6,7 @@ using namespace std::literals;
 
     json::Node RequestHandler::GetRoute(const int id, router::RoutingPoints points) {               
         json::Node result;
-        static Router router(catalogue_, reader_);
+        static Router router(catalogue_, GetRoutingSettings());
         auto route = router.GetRoute(points);
         if (!route) {
             result = json::Builder().StartDict().Key("request_id").Value(id).
@@ -80,6 +80,15 @@ using namespace std::literals;
         }
         return result;       
     }
+    
+	router::RoutingSettings RequestHandler::GetRoutingSettings() {
+		static const double km_hour_to_metr_min = 1000. / 60;
+		const json::Dict& map = reader_.Request("routing_settings"s).AsDict();
+		router::RoutingSettings settings;
+		settings.bus_wait_time_ = map.at("bus_wait_time"s).AsDouble();
+		settings.bus_velocity_ = map.at("bus_velocity"s).AsDouble() * km_hour_to_metr_min;
+		return settings;
+	}
 
 RequestHandler::RequestHandler(const Catalogue& catalogue, const Reader& reader)
     : catalogue_(catalogue), reader_(reader) {
@@ -87,11 +96,10 @@ RequestHandler::RequestHandler(const Catalogue& catalogue, const Reader& reader)
     const json::Array& arr = reader.Request("stat_requests"s).AsArray();
         
     for (auto& maps : arr) {
-        
         const auto& map = maps.AsDict();
         const int id = map.at("id"s).AsInt();
         json::Node node;
-        if (map.at("type"s).AsString() == "Route"s) {                                //
+        if (map.at("type"s).AsString() == "Route"s) {                              
             router::RoutingPoints points;
             points.from_ = map.at("from"s).AsString();
             points.to_ = map.at("to"s).AsString();
